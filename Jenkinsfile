@@ -1,6 +1,10 @@
 // Jenkinsfile
 pipeline {
-    agent any // Menjalankan pipeline pada Jenkins agent mana pun yang tersedia
+    agent {
+        docker {
+            image 'python:3.10' 
+        }
+    }
 
     stages {
         stage('Install Dependencies') {
