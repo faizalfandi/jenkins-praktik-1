@@ -1,4 +1,3 @@
-// Jenkinsfile
 pipeline {
     agent {
         docker {
@@ -6,16 +5,28 @@ pipeline {
         }
     }
 
+    environment {
+        VENV = 'view'
+    }
+    
     stages {
-        stage('Install Dependencies') {
+        stage('Setup Environment & Install Dependencies') {
             steps {
-                sh 'pip install -r requirements.txt'
+                sh '''
+                    python -m venv $VENV           
+                    . $VENV/bin/activate
+                    pip install --upgrade pip
+                    pip install -r requirements.txt 
+                '''
             }
         }
 
         stage('Run Tests') {
             steps {
-                sh 'pytest test_app.py'
+                sh '''
+                    . $VENV/bin/activate     i
+                    pytest test_app.py 
+                 '''
             }
         }
 
