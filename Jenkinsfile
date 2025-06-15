@@ -1,0 +1,64 @@
+// Jenkinsfile
+pipeline {
+    agent any // Menjalankan pipeline pada Jenkins agent mana pun yang tersedia
+
+    stages {
+        stage('Install Dependencies') {
+            steps {
+                sh 'pip install -r requirements.txt'
+            }
+        }
+
+        stage('Run Tests') {
+            steps {
+                sh 'pytest test_app.py'
+            }
+        }
+
+        stage('Deploy') {
+            when {
+                // Tahap Deploy hanya akan berjalan jika branch adalah 'main'
+                // atau branch yang cocok dengan pola regex 'release/.*'
+                anyOf {
+                    branch 'main'
+                    branch pattern: 'release/.*', comparator: "REGEXP"
+                }
+            }
+            steps {
+                echo "Simulating deploy from branch ${env.BRANCH_NAME}"
+                // Di sini Anda akan menambahkan langkah-langkah deployment yang sebenarnya,
+                // seperti menyalin file ke server, membangun Docker image, dll.
+            }
+        }
+    }
+
+    post {
+        // Tindakan setelah pipeline selesai, baik sukses maupun gagal
+        success {
+            script {
+                def payload = [
+                    content: "✅ Build Success on `${env.BRANCH_NAME}`\nURL: ${env.BUILD_URL}"
+                ]
+                httpRequest(
+                    httpMode: 'POST',
+                    contentType: 'APPLICATION_JSON',
+                    requestBody: groovy.json.JsonOutput.toJson(payload),
+                    url: 'https://discord.com/api/webhooks/1383849370453147708/DOxVGgSlFCvc1OccXvBsfj7-RfdOWK3KWPAj3c0YexkQtqOrTg93cJqvFdkwqK9ey8hc'
+                )
+            }
+        }
+        failure {
+            script {
+                def payload = [
+                    content: "❌ Build FAILED on `${env.BRANCH_NAME}`\nURL: ${env.BUILD_URL}"
+                ]
+                httpRequest(
+                    httpMode: 'POST',
+                    contentType: 'APPLICATION_JSON',
+                    requestBody: groovy.json.JsonOutput.toJson(payload),
+                    url: 'https://discord.com/api/webhooks/1383849370453147708/DOxVGgSlFCvc1OccXvBsfj7-RfdOWK3KWPAj3c0YexkQtqOrTg93cJqvFdkwqK9ey8hc'
+                )
+            }
+        }
+    }
+}
